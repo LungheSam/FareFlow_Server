@@ -52,7 +52,7 @@ const sms = at.SMS;
 app.post('/send-welcome-message', async (req, res) => {
   const { email, phone, firstName, lastName, cardUID, password } = req.body;
 
-  const message = `Hello ${firstName},\nThank you for registering on FareFlow.\nEmail: ${email}\nCardUID: ${cardUID}\nPassword: ${password}`;
+  const message = `Hello ${firstName},\nThank you for registering on FareFlow.\nEmail: ${email}\nCardUID: ${cardUID}\nPassword: ${password}\nDo not share your credentials given above with anyone\n`;
 
   try {
     // Check if user already exists
@@ -90,6 +90,42 @@ app.post('/send-welcome-message', async (req, res) => {
         email: email,
         first_name: firstName,
         card_uid: cardUID,
+        password: password
+      }
+    );
+    console.log("Email Sent Successfully to "+email);
+
+    // Send SMS using Africa's Talking
+    const result = await sms.send({
+      to: [phone],
+      message: message,
+    });
+    console.log('SMS sent:', result);
+    res.status(200).json({ success: true, message: 'Registration successful! Email and SMS sent.' });
+
+  } catch (error) {
+    console.error('Notification error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+app.post('/send-welcome-message-driver', async (req, res) => {
+  const { email, phone, firstName, licenseNumber, password } = req.body;
+
+  const message = `Hello Driver ${firstName},\nThank you for registering on FareFlow as Driver.\n----------------\nEmail: ${email}\nPassword: ${password}\nGo to https://fare-flow-admin.vercel.app/ and login with the credentials given.\nDo not share your credentials with anyone....\n`;
+
+  try {
+
+    // Send Email using SendGrid
+    await emailjs.send(
+      process.env.EMAILJS_SERVICE_ID,
+      process.env.EMAILJS_TEMPLATE_ID,
+      {
+        to_email: email,
+        subject: 'Welcome to FareFlow',
+        message: message,
+        email: email,
+        first_name: firstName,
+        card_uid: licenseNumber,
         password: password
       }
     );
